@@ -1,0 +1,106 @@
+[
+  {
+    "question": "Quels outils utilise-t-on pour versionner les données ?",
+    "ground_truth": "DVC (Data Version Control) avec un remote S3 : SeaweedFS dans le cours (bucket dvc-store, préfixe scoring). Git ne versionne que les petits fichiers .dvc et dvc.lock, les données elles-mêmes vont dans le stockage objet."
+  },
+  {
+    "question": "Quel stockage objet S3 le cours utilise-t-il, et pourquoi pas MinIO ?",
+    "ground_truth": "SeaweedFS, déployé dans le cluster kind : licence Apache 2.0, même API S3, stockage par défaut de Kubeflow Pipelines depuis la version 2.15, alors que MinIO communautaire a été archivé et retiré de Docker Hub en 2026."
+  },
+  {
+    "question": "Comment désigner le modèle en production dans le registre MLflow ?",
+    "ground_truth": "Avec un alias : champion pour la production (challenger pour le candidat), posé avec MlflowClient().set_registered_model_alias et chargé via l'URI models:/scoring-model@champion. Les stages (Staging, Production) sont dépréciés."
+  },
+  {
+    "question": "Dans quel format MLflow 3 sérialise-t-il un modèle scikit-learn ?",
+    "ground_truth": "En skops (fichier model.skops) et non plus en pickle ; pour démontrer le risque d'un pickle, il faut produire explicitement un fichier .pkl."
+  },
+  {
+    "question": "Quel jeu de données sert de fil rouge au cours ?",
+    "ground_truth": "Statlog German Credit (UCI) : 1 000 demandes de crédit, 20 variables, cible credit_risk (good ou bad), classe positive bad (30 %). Tout est décrit dans dataset.yaml, qu'un binôme peut remplacer par son propre jeu de données."
+  },
+  {
+    "question": "Comment teste-t-on le modèle avant sa promotion au Lab 3 ?",
+    "ground_truth": "Avec Evidently 0.7 (preset de classification avec tests et seuils) et des tests comportementaux en pytest : invariance, tests directionnels (augmenter le montant ou la durée ne doit pas diminuer le risque) et performance minimale par sous-groupe. Deepchecks a été abandonné car incompatible avec scikit-learn 1.8 et NumPy 2."
+  },
+  {
+    "question": "Quelle métrique Fairlearn mesure la parité statistique ?",
+    "ground_truth": "demographic_parity_difference : l'écart entre le plus haut et le plus bas taux de sélection (prédictions positives) des groupes sensibles ; 0 signifie parité parfaite."
+  },
+  {
+    "question": "Que fait PagedAttention dans vLLM ?",
+    "ground_truth": "PagedAttention gère la mémoire GPU des tokens (le KV cache) par pages, comme la pagination mémoire d'un OS : la fragmentation disparaît presque entièrement, ce qui permet des batchs plus grands et un meilleur débit."
+  },
+  {
+    "question": "Comment déclencher un ré-entraînement automatique ?",
+    "ground_truth": "Quand le monitoring (Evidently) détecte un drift au-delà du seuil, un webhook appelle l'API Kubeflow Pipelines qui lance le pipeline de Continuous Training : ré-entraînement, validation du modèle, enregistrement puis mise à jour du déploiement."
+  },
+  {
+    "question": "Quels sont les 4 signaux d'or de Google SRE ?",
+    "ground_truth": "Latence, trafic, erreurs et saturation (Latency, Traffic, Errors, Saturation)."
+  },
+  {
+    "question": "Qu'est-ce que le burn rate d'un SLO ?",
+    "ground_truth": "La vitesse de consommation du budget d'erreur du SLO (1 = budget épuisé exactement à la fin de la fenêtre). Sur une fenêtre de 30 jours, un burn rate de 14,4 consomme 2 % du budget par heure, soit un taux d'erreur de 1,44 % pour un SLO à 99,9 %."
+  },
+  {
+    "question": "Quels serveurs de modèles sont présentés dans le cours ?",
+    "ground_truth": "Triton, TorchServe, TF Serving, BentoML, vLLM, Seldon Core, MLServer et ONNX Runtime ; KServe orchestre leur déploiement sur Kubernetes."
+  },
+  {
+    "question": "Qu'est-ce que MIG sur un GPU ?",
+    "ground_truth": "Multi-Instance GPU : partition matérielle d'un GPU A100 ou H100 en 1, 2, 3, 4 ou 7 instances isolées, d'où une latence prédictible."
+  },
+  {
+    "question": "Quelles sont les 4 catégories de risque de l'AI Act européen ?",
+    "ground_truth": "Risque inacceptable (interdit), haut risque (obligations fortes), risque limité (obligations de transparence) et risque minimal."
+  },
+  {
+    "question": "Dans quelle catégorie de l'AI Act tombe un modèle de scoring de crédit ?",
+    "ground_truth": "Haut risque : l'évaluation de la solvabilité des personnes physiques figure à l'annexe III de l'AI Act (documentation, gestion des risques, supervision humaine et suivi obligatoires)."
+  },
+  {
+    "question": "Quel format privilégier pour le serving, ONNX ou pickle ?",
+    "ground_truth": "ONNX : c'est un graphe portable et non exécutable, alors que charger un pickle peut exécuter du code arbitraire (risque RCE)."
+  },
+  {
+    "question": "À quoi sert Argo CD ?",
+    "ground_truth": "Au GitOps : Argo CD réconcilie en continu l'état du cluster Kubernetes avec l'état désiré décrit dans Git (synchronisation, détection de dérive, rollback)."
+  },
+  {
+    "question": "Comment configurer le scale-to-zero dans KServe ?",
+    "ground_truth": "minReplicas: 0 dans spec.predictor de l'InferenceService, avec KServe en mode Knative (serverless) : Knative Serving supprime les pods sans trafic et les recrée à la première requête."
+  },
+  {
+    "question": "Quelle est la différence entre HPA et KEDA ?",
+    "ground_truth": "HPA (natif Kubernetes) scale sur CPU/RAM ou des métriques custom Prometheus, avec au moins 1 réplique. KEDA scale sur des événements (lag Kafka, longueur de queue, cron, requêtes HTTP) et permet le scale-to-zero."
+  },
+  {
+    "question": "Qu'est-ce que le training-serving skew ?",
+    "ground_truth": "Un écart entre le feature engineering de l'entraînement et celui du serving, qui dégrade silencieusement les prédictions ; un feature store (Feast) l'évite avec une seule définition des features."
+  },
+  {
+    "question": "Quelles sont les 4 métriques Ragas utilisées pour évaluer un RAG ?",
+    "ground_truth": "faithfulness, answer_relevancy, context_precision et context_recall."
+  },
+  {
+    "question": "Qu'est-ce que OWASP LLM01 ?",
+    "ground_truth": "Prompt Injection : l'utilisateur injecte dans son entrée des instructions qui modifient le comportement du LLM."
+  },
+  {
+    "question": "Comment scanner une image Docker pour des CVE ?",
+    "ground_truth": "Avec Trivy : trivy image --severity HIGH,CRITICAL nom:tag (avec --exit-code 1 pour faire échouer la CI)."
+  },
+  {
+    "question": "Qu'est-ce qu'un Model Card ?",
+    "ground_truth": "Une documentation standardisée d'un modèle (Mitchell et al., 2019) : détails, usage prévu, métriques par groupe, considérations éthiques et limites."
+  },
+  {
+    "question": "À quoi sert SHAP ?",
+    "ground_truth": "À expliquer les prédictions d'un modèle en décomposant la contribution de chaque feature (valeurs de Shapley), globalement et pour une prédiction individuelle."
+  },
+  {
+    "question": "Comment mesurer le drift de données en continu ?",
+    "ground_truth": "Avec Evidently : un CronJob Kubernetes compare les données de référence aux données courantes et expose les scores de drift en métriques Prometheus (dashboards Grafana, alertes Alertmanager)."
+  }
+]

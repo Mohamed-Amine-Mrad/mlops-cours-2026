@@ -1,0 +1,54 @@
+# Copie de référence de monitoring/values-monitoring.yaml (Lab 7, étape 3), utilisée par
+# infra/monitoring/install.sh tant que le fichier de l'étudiant n'existe pas.
+# Values de kube-prometheus-stack 91.9.0 pour le cluster kind du cours :
+# pas de persistance, ressources réduites, et Prometheus qui découvre TOUS les
+# PodMonitor / ServiceMonitor / PrometheusRule du cluster (pas seulement ceux du chart).
+prometheus:
+  prometheusSpec:
+    retention: 24h
+    resources:
+      requests: {cpu: 200m, memory: 512Mi}
+      limits: {cpu: "1", memory: 1Gi}
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+grafana:
+  adminPassword: admin            # lab uniquement
+  # Pas de NodePort : le port 30080 du poste est déjà celui de Kourier (Lab 5).
+  # Accès par port-forward (kubectl -n monitoring port-forward svc/kube-prom-stack-grafana 3000:80)
+  additionalDataSources:
+    - name: Loki
+      uid: loki
+      type: loki
+      access: proxy
+      url: http://loki.monitoring:3100
+      jsonData:
+        maxLines: 1000
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}
+    limits: {memory: 384Mi}
+alertmanager:
+  alertmanagerSpec:
+    # Les AlertmanagerConfig (étape 8) s'appliquent à toutes les alertes, quel que soit
+    # leur namespace (par défaut : seulement celles du namespace de l'AlertmanagerConfig).
+    alertmanagerConfigMatcherStrategy:
+      type: None
+    resources:
+      requests: {memory: 64Mi}
+      limits: {memory: 128Mi}
+# Sur kind, ces composants n'exposent leurs métriques que sur 127.0.0.1 : cibles DOWN
+# et alertes permanentes. On ne les surveille pas.
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeProxy:
+  enabled: false
+# Docker Desktop (macOS, Windows) : la racine du nœud kind n'est pas un montage partagé et
+# node-exporter refuse de démarrer (« path / is mounted on / but it is not a shared or slave
+# mount »). On renonce aux métriques de disques du nœud, inutiles ici.
+prometheus-node-exporter:
+  hostRootFsMount:
+    enabled: false

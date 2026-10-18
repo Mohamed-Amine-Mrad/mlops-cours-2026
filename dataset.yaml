@@ -1,0 +1,70 @@
+# =============================================================================
+# dataset.yaml — décrit VOTRE jeu de données. Tout le pipeline le lit :
+# préparation, entraînement, validation (GX), API de prédiction, équité,
+# monitoring et vérifications automatiques (make check-mX).
+#
+# Changer de dataset = réécrire CE fichier + src/download.py, pas le pipeline.
+# Garder exactement les mêmes clés ; seules les valeurs changent.
+# =============================================================================
+name: german-credit
+description: Demandes de crédit à la consommation d'une banque allemande (données 1973-1975, publiées à l'UCI en 1994)
+source:
+  url: https://archive.ics.uci.edu/dataset/144/statlog+german+credit+data
+  license: CC BY 4.0
+  citation: >-
+    Hofmann, H. (1994). Statlog (German Credit Data). UCI Machine Learning Repository.
+    https://doi.org/10.24432/C5NC77
+
+# Fichier produit par src/download.py (versionné ensuite avec DVC)
+raw_path: data/raw/dataset.csv
+
+target:
+  column: credit_risk
+  positive_class: bad          # la classe « à risque » que le modèle doit détecter
+
+features:
+  numeric:
+    - duration                 # durée du crédit (mois)
+    - credit_amount            # montant (DM)
+    - installment_commitment   # mensualité en % du revenu disponible (1-4)
+    - residence_since          # ancienneté dans le logement (1-4)
+    - age                      # âge (années)
+    - existing_credits         # crédits en cours dans la banque
+    - num_dependents           # personnes à charge
+  categorical:
+    - checking_status
+    - credit_history
+    - purpose
+    - savings_status
+    - employment
+    - personal_status
+    - other_parties
+    - property_magnitude
+    - other_payment_plans
+    - housing
+    - job
+    - own_telephone
+    - foreign_worker
+
+# Attributs sensibles : analysés au Lab 8 (équité) et surveillés au Lab 7.
+# « bins » : découpage d'un attribut numérique en groupes (bornes, labels).
+sensitive:
+  - column: age
+    bins: [0, 25, 120]
+    labels: ["<25", ">=25"]
+  - column: personal_status
+  - column: foreign_worker
+
+metrics:
+  primary: roc_auc             # métrique de sélection et de promotion du modèle
+  promotion_threshold: 0.70    # gate : en dessous, le modèle n'est pas promu
+  # Coût métier d'une erreur (matrice de coûts fournie avec le dataset) :
+  # accorder un crédit à un mauvais payeur (faux négatif) coûte 5,
+  # refuser un bon payeur (faux positif) coûte 1.
+  cost_matrix:
+    false_negative: 5
+    false_positive: 1
+
+split:
+  test_size: 0.2
+  random_state: 42

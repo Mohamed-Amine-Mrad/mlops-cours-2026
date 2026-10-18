@@ -1,0 +1,105 @@
+# =============================================================================
+# Serveur MLflow unique du cours (installé au Lab 0, utilisé jusqu'au mini-projet).
+#   - Backend store  : SQLite sur volume persistant (en prod : PostgreSQL)
+#   - Artifact store : bucket s3://mlflow-artifacts sur SeaweedFS
+#   - Mode "artifact proxy" (--artifacts-destination) : les clients (poste,
+#     pods KFP, CI) n'ont PAS besoin des identifiants S3 ; seul le serveur
+#     les détient.
+#
+#   Depuis le poste   : http://localhost:5000      (port-forward)
+#   Depuis le cluster : http://mlflow.mlflow:5000
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mlflow
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: s3-credentials
+  namespace: mlflow
+type: Opaque
+stringData:
+  AWS_ACCESS_KEY_ID: mlops
+  AWS_SECRET_ACCESS_KEY: mlops-lab-secret
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mlflow-data
+  namespace: mlflow
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow
+  namespace: mlflow
+  labels:
+    app: mlflow
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mlflow
+  template:
+    metadata:
+      labels:
+        app: mlflow
+    spec:
+      containers:
+        - name: mlflow
+          image: ghcr.io/mlflow/mlflow:v3.16.1
+          command: ["/bin/sh", "-c"]
+          # yamllint disable rule:line-length
+          args:
+            - >-
+              pip install --no-cache-dir --quiet boto3 &&
+              exec mlflow server
+              --backend-store-uri sqlite:////mlflow/mlflow.db
+              --artifacts-destination s3://mlflow-artifacts
+              --host 0.0.0.0 --port 5000 --workers 2
+              --allowed-hosts "localhost:*,127.0.0.1:*,mlflow,mlflow:*,mlflow.mlflow,mlflow.mlflow:*,mlflow.mlflow.svc.cluster.local:*,10.*,172.*,192.168.*"
+          # yamllint enable rule:line-length
+          envFrom:
+            - secretRef:
+                name: s3-credentials
+          env:
+            - { name: MLFLOW_S3_ENDPOINT_URL, value: "http://s3.storage:8333" }
+            - { name: AWS_DEFAULT_REGION, value: us-east-1 }
+            # Pas d'exécuteur de tâches en arrière-plan (inutile ici, ~170 Mo par worker)
+            - { name: MLFLOW_SERVER_ENABLE_JOB_EXECUTION, value: "false" }
+          ports:
+            - { name: http, containerPort: 5000 }
+          readinessProbe:
+            httpGet: { path: /health, port: 5000 }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 18
+          resources:
+            requests: { cpu: 100m, memory: 512Mi }
+            limits: { memory: 2Gi }
+          volumeMounts:
+            - { name: data, mountPath: /mlflow }
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: mlflow-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlflow
+  namespace: mlflow
+spec:
+  selector:
+    app: mlflow
+  ports:
+    - { name: http, port: 5000, targetPort: 5000 }

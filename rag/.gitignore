@@ -1,0 +1,4 @@
+# Fichier : rag/.gitignore
+__pycache__/
+# PDF du cours : distribués sur l'espace de cours, à ne pas republier dans votre fork public
+docs/*.pdf

@@ -1,0 +1,22 @@
+# Fichier : .github/CODEOWNERS.exemple (optionnel, inactif sous ce nom)
+# Désigne automatiquement les relecteurs d'une PR. Pour l'activer :
+#   1. git mv .github/CODEOWNERS.exemple .github/CODEOWNERS ;
+#   2. remplacer @membre-1 / @membre-2 par vos pseudos GitHub ;
+#   3. Settings > Branches > règle de protection de main : cocher
+#      « Require review from Code Owners ».
+# Règle : la DERNIÈRE ligne qui correspond à un fichier l'emporte.
+# GitHub n'ajoute pas l'auteur de la PR comme relecteur : avec deux propriétaires par
+# défaut, c'est donc le partenaire qui est sollicité.
+
+# Par défaut : les deux membres du binôme
+*                       @membre-1 @membre-2
+
+# Contrat de données : toute modification se discute à deux (et avec l'enseignant si le
+# dataset change : voir l'issue de proposition de dataset)
+/dataset.yaml           @membre-1 @membre-2
+/src/download.py        @membre-1 @membre-2
+
+# Extensions : l'auteur de l'extension est propriétaire de ses fichiers, le partenaire relit.
+# Décommenter et adapter, ex. :
+# /batch/               @membre-1
+# /governance/explain_api.py  @membre-2

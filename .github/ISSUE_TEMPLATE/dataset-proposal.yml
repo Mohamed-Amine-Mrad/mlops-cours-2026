@@ -1,0 +1,94 @@
+# Fichier : .github/ISSUE_TEMPLATE/dataset-proposal.yml
+# Formulaire GitHub de proposition de dataset libre (mini-projet, Module 10).
+# À ouvrir sur le repo DU COURS (mlops-itbs-2026/mlops-cours-2026) AVANT la séance du Lab 1 (S2).
+name: "Mini-projet : proposer un dataset libre"
+description: "À valider avant la séance du Lab 1 (S2). Sans validation, le fil rouge credit scoring s'applique."
+title: "[Dataset] <groupe> — <binôme> — <nom du dataset>"
+labels: ["dataset", "à valider"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Par défaut, tout le monde travaille sur le **credit scoring** (Statlog German Credit).
+        Vous pouvez proposer votre propre jeu de données s'il respecte **toutes** les
+        conditions ci-dessous. L'enseignant répond par le label `validé` ou `refusé`.
+        Vous pourrez revenir au credit scoring à tout moment, sans pénalité.
+  - type: input
+    id: binome
+    attributes:
+      label: Groupe et binôme
+      placeholder: "G2 — @alice, @bob"
+    validations:
+      required: true
+  - type: input
+    id: lien
+    attributes:
+      label: Lien vers la page officielle du dataset
+      placeholder: "https://archive.ics.uci.edu/dataset/…"
+    validations:
+      required: true
+  - type: input
+    id: licence
+    attributes:
+      label: Licence (ouverte)
+      placeholder: "CC BY 4.0, CC0, ODbL…"
+    validations:
+      required: true
+  - type: input
+    id: taille
+    attributes:
+      label: Taille
+      description: "Entre 1 000 et 100 000 lignes, moins de 50 Mo."
+      placeholder: "48 842 lignes × 14 variables, 5 Mo"
+    validations:
+      required: true
+  - type: input
+    id: cible
+    attributes:
+      label: Cible et classe positive
+      description: "Classification supervisée, binaire de préférence. Donnez la répartition des classes."
+      placeholder: "income ; classe positive >50K (24 %)"
+    validations:
+      required: true
+  - type: input
+    id: sensibles
+    attributes:
+      label: Attribut(s) sensible(s)
+      description: "Au moins un : âge, sexe, origine, situation familiale, handicap…"
+      placeholder: "sex, race, age"
+    validations:
+      required: true
+  - type: textarea
+    id: contexte
+    attributes:
+      label: Contexte en 5 lignes
+      description: >-
+        Qui utiliserait ce modèle, pour quelle décision, ce que coûte une erreur dans chaque sens
+        (votre matrice de coûts), pourquoi ce sujet vous intéresse.
+    validations:
+      required: true
+  - type: textarea
+    id: telechargement
+    attributes:
+      label: Téléchargement par script
+      description: >-
+        URL directe ou commande que src/download.py utilisera. Évitez les sources qui exigent
+        un compte (Kaggle…) : la CI devrait alors gérer un secret.
+      render: python
+    validations:
+      required: true
+  - type: checkboxes
+    id: conditions
+    attributes:
+      label: Conditions (toutes obligatoires)
+      options:
+        - label: "Tabulaire, classification supervisée."
+          required: true
+        - label: "Entre 1 000 et 100 000 lignes, fichier de moins de 50 Mo."
+          required: true
+        - label: "Licence ouverte, téléchargeable par un script (src/download.py), sans étape manuelle."
+          required: true
+        - label: "Au moins un attribut sensible."
+          required: true
+        - label: "Aucune donnée identifiante (nom, adresse, e-mail, numéro de téléphone ou d'identité…)."
+          required: true

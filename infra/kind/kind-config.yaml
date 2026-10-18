@@ -1,0 +1,26 @@
+# kind-config.yaml — cluster unique du cours (créé au Lab 0, conservé jusqu'au mini-projet).
+# 1 control-plane + 2 workers. Ne PAS recréer le cluster dans les labs suivants :
+# le stockage S3 (SeaweedFS) et MLflow y vivent.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: mlops-lab
+# Registry local (localhost:5001) — utilisé dès le Lab 2 (image du pipeline).
+# Le patch n'est plus nécessaire avec les images kind >= v0.27 mais reste inoffensif.
+containerdConfigPatches:
+  - |-
+    [plugins."io.containerd.grpc.v1.cri".registry]
+      config_path = "/etc/containerd/certs.d"
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 80       # Ingress HTTP (Labs 5+)
+        hostPort: 80
+        protocol: TCP
+      - containerPort: 443      # Ingress HTTPS
+        hostPort: 443
+        protocol: TCP
+      - containerPort: 30080    # NodePort Kourier / KServe (Lab 5)
+        hostPort: 30080
+        protocol: TCP
+  - role: worker
+  - role: worker

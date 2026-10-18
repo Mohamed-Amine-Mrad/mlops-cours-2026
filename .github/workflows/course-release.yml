@@ -1,0 +1,25 @@
+# Fichier : .github/workflows/course-release.yml
+# Publication d'une édition du cours : `git tag v2026.10 && git push --tags`
+# -> une Release GitHub avec les PDF des énoncés et du syllabus.
+name: course-release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.repository_owner == 'mlops-itbs-2026'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+      - run: make pdf
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: dist/pdf/*.pdf
+          generate_release_notes: true

@@ -1,0 +1,59 @@
+# Fichier : labs/m6-cicd/starter/git-server.yaml
+# Un dépôt Git servi DANS le cluster, à la place du fork GitHub : pour la CI du cours (e2e.sh,
+# un runner ne peut ni créer ni pousser un fork) et pour une salle sans accès à GitHub (Lab 6,
+# étape 2.4). Argo CD le lit en
+#   git://git-server.gitops-e2e.svc.cluster.local/mlops-cours-2026.git
+# et on y pousse par un port-forward (port 9418). Lecture ET écriture anonymes : réservé à un
+# cluster de TP, jetable.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gitops-e2e
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: git-server
+  namespace: gitops-e2e
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: git-server}
+  template:
+    metadata:
+      labels: {app: git-server}
+    spec:
+      initContainers:
+        - name: init-repo
+          image: alpine/git:v2.52.0
+          command: ["git", "init", "--bare", "--initial-branch=main",
+                    "/srv/git/mlops-cours-2026.git"]
+          volumeMounts:
+            - {name: repos, mountPath: /srv/git}
+      containers:
+        - name: git-daemon
+          image: alpine/git:v2.52.0  # ENTRYPOINT ["git"]
+          args: ["daemon", "--reuseaddr", "--export-all", "--enable=receive-pack",
+                 "--base-path=/srv/git", "/srv/git"]
+          ports:
+            - {name: git, containerPort: 9418}
+          readinessProbe:
+            tcpSocket: {port: 9418}
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {cpu: 500m, memory: 128Mi}
+          volumeMounts:
+            - {name: repos, mountPath: /srv/git}
+      volumes:
+        - name: repos
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: git-server
+  namespace: gitops-e2e
+spec:
+  selector: {app: git-server}
+  ports:
+    - {name: git, port: 9418, targetPort: 9418}

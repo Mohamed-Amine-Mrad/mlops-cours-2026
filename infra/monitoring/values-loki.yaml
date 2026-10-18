@@ -1,0 +1,55 @@
+# Values Loki (chart grafana-community/loki 18.13.8, Loki 3.7) — Lab 7.
+# Le chart « grafana/loki-stack » est déprécié et le chart Loki est maintenu depuis 2026
+# dans le dépôt grafana-community. Mode monolithique (un seul pod « single binary »),
+# stockage filesystem éphémère : léger et suffisant pour kind (logs perdus au redémarrage).
+#   Service : loki.monitoring:3100   (data source Grafana, job de drift)
+deploymentMode: Monolithic
+loki:
+  auth_enabled: false            # mono-tenant : pas d'en-tête X-Scope-OrgID
+  commonConfig:
+    replication_factor: 1
+  storage:
+    type: filesystem
+  schemaConfig:
+    configs:
+      - from: "2024-04-01"
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
+  # Les prédictions journalisées sont des données personnelles : 72 h de rétention.
+  limits_config:
+    retention_period: 72h
+  compactor:
+    retention_enabled: true
+    delete_request_store: filesystem
+singleBinary:
+  replicas: 1
+  persistence:
+    enabled: false               # emptyDir (équivalent de loki.persistence.enabled=false)
+  resources:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {memory: 1Gi}
+# Mode monolithique : aucun réplica pour les cibles « simple scalable ».
+read:
+  replicas: 0
+write:
+  replicas: 0
+backend:
+  replicas: 0
+# Composants inutiles pour le lab (et gourmands : le cache memcached demande plusieurs Go).
+gateway:
+  enabled: false
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
+lokiCanary:
+  enabled: false
+test:
+  enabled: false
+sidecar:
+  rules:
+    enabled: false               # pas de règles d'alerte Loki dans le lab

@@ -1,0 +1,65 @@
+# Fichier : .gitignore
+# .gitignore du cours MLOps — complet dès le Lab 0 : chaque bloc indique le lab
+# qui produit ces fichiers. Rien à ajouter au fil des labs.
+
+# --- Lab 0 : environnement et secrets ---
+.env
+.envrc
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.ruff_cache/
+.pytest_cache/
+
+# --- Lab 1 : versioning ---
+# Les données, le modèle local (models/) et les sorties de stages sont ignorés
+# automatiquement par DVC (fichiers .gitignore dans data/raw, data/processed, models).
+# Feature store local (registre + store en ligne SQLite), recréé par `feast apply`
+features/data/
+# Traces MLflow locales créées par erreur sans MLFLOW_TRACKING_URI
+mlruns/
+mlflow.db
+
+# --- Lab 2 : pipelines ---
+# Fichiers regénérés : pipeline compilé, exécutions kfp.local, rapport de validation
+scoring_pipeline.yaml
+local_outputs/
+reports/validation.json
+
+# --- Lab 3 : validation ---
+# Pipelines de test compilés, rapports regénérés à chaque exécution
+# (gx/uncommitted/, résultats GX et Data Docs, est ignoré par gx/.gitignore)
+test_bad_data.yaml
+drift_demo.yaml
+reports/validation.html
+reports/drift.*
+reports/model_validation.*
+reports/model_behavior.xml
+reports/kfp/
+
+# --- Lab 4 : packaging ---
+# Pickles malveillants de démonstration (ModelScan) — regénérés, jamais commités.
+# packaging/model/ (modèle ONNX figé) EST versionné : la CI du Lab 6 en a besoin.
+packaging/scan-demo/*.pkl
+
+# --- Lab 5 : serving ---
+# Rapports Locust détaillés (seuls les *_stats.csv sont commités, lus par check-m5)
+reports/m5/*.html
+reports/m5/*_failures.csv
+reports/m5/*_exceptions.csv
+reports/m5/*_stats_history.csv
+
+# --- Lab 6 : CI/CD/CT ---
+# Pipeline CT compilé ; lots et rapports de dérive (rangés dans MLflow, expérience scoring-drift)
+ct_pipeline.yaml
+data/drift/
+reports/drift/
+
+# --- Lab 9 : LLMOps (projet rag/ isolé, voir aussi rag/.gitignore) ---
+rag/.venv/
+# PDF du cours indexés par le RAG : à ne pas republier dans votre repo
+rag/docs/*.pdf
+
+# --- Cours : PDF générés (make pdf) ---
+dist/

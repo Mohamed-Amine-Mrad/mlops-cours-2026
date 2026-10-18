@@ -1,0 +1,64 @@
+# Fichier : .github/workflows/course-ci.yml
+# CI du cours lui-même (repo du cours et repo des solutions) — pas celle des étudiants.
+# Dans un repo d'étudiant (copie du template), ce workflow ne fait rien (condition `if`).
+name: course-ci
+
+on:
+  push:
+    branches: [main, "solution/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualite:
+    if: github.repository_owner == 'mlops-itbs-2026'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+      - name: Environnement Python du socle
+        run: uv sync --locked
+      - name: Lint Python et YAML
+        run: make lint
+      - name: Tests unitaires (sans cluster)
+        run: uv run pytest -q
+      - name: Énoncés identiques aux fichiers (« # Fichier : »)
+        run: |
+          ref="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          # solution/mN : l'énoncé du lab N face à l'état en fin de lab N (les labs précédents
+          # sont vérifiés sur leur propre branche : un lab ultérieur peut modifier leurs fichiers).
+          case "$ref" in
+            solution/m*) args="--labs ${ref#solution/m}" ;;
+            *) if [ -f SOLUTIONS.md ]; then args="--labs 9 10"; else args="--skip-missing"; fi ;;
+          esac
+          uv run python tools/check_sync.py --tree . $args
+      - name: Scripts shell (check.sh, e2e.sh, install.sh)
+        run: |
+          find labs infra -name '*.sh' -print0 \
+            | xargs -0 uvx --from shellcheck-py==0.11.0.1 shellcheck -S warning
+      - name: Aucun reliquat de l'ancienne version
+        run: |
+          # MinIO n'apparaît plus que dans des notes historiques (Markdown) et des
+          # détecteurs de secrets (check.sh) : jamais dans le code ni les manifests.
+          ! grep -rIl --exclude-dir=.git --include='*.py' --include='*.yaml' --include='*.yml' \
+            --include='Dockerfile*' --exclude='course-ci.yml' -e 'minioadmin' -e 'minio/minio' .
+          ! grep -rIl --exclude-dir=.git -e '~/mlops-labs' labs
+
+  pdf:
+    if: github.repository_owner == 'mlops-itbs-2026'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+      - name: Énoncés et syllabus en PDF
+        run: make pdf
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pdf
+          path: dist/pdf/
+          retention-days: 30

@@ -1,0 +1,108 @@
+# Fichier : .github/ISSUE_TEMPLATE/extension.yml
+# Formulaire GitHub de déclaration d'extension (mini-projet, Module 10).
+# À ouvrir sur le repo DU COURS (mlops-itbs-2026/mlops-cours-2026), pas sur celui du binôme :
+# l'ordre des issues fait foi pour la règle « 3 binômes maximum par extension et par groupe ».
+name: "Mini-projet : déclarer mon extension"
+description: "Une issue par étudiant, au plus tard à la fin de la S8 (jalon J1)."
+title: "[Extension] <groupe> — @<pseudo> — <nom de l'extension>"
+labels: ["extension", "à valider"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Une issue par étudiant.** Les deux membres d'un binôme choisissent deux extensions
+        **différentes**. Au plus **3 binômes par extension et par groupe** : la date de
+        l'issue fait foi (premier déclaré, premier servi). Vérifiez les issues déjà ouvertes
+        (filtre `label:extension`) avant de déclarer.
+        L'enseignant répond par le label `validé` (ou propose une alternative).
+        Le niveau plafonne la note d'extension : ★ → /8, ★★ → /11, ★★★ → /12.
+  - type: input
+    id: groupe
+    attributes:
+      label: Groupe de TD / TP
+      placeholder: "ex. G2"
+    validations:
+      required: true
+  - type: input
+    id: repo
+    attributes:
+      label: Repo du binôme
+      placeholder: "https://github.com/VOTRE_USER/mlops-cours-2026"
+    validations:
+      required: true
+  - type: input
+    id: partenaire
+    attributes:
+      label: Pseudo GitHub du partenaire et son extension (si déjà déclarée)
+      placeholder: "@partenaire — scoring batch (#42)"
+    validations:
+      required: true
+  - type: dropdown
+    id: extension
+    attributes:
+      label: Extension choisie
+      description: "Catalogue du mini-projet (labs/m10-capstone/README.md). Compétences entre parenthèses."
+      options:
+        - "feature-store — Feature store en ligne ★★ (C1, C3)"
+        - "hpo — Optimisation d'hyperparamètres orchestrée (Optuna/Katib, MLflow) ★★ (C1, C2)"
+        - "retrain-planifie — Ré-entraînement planifié ★★ (C2, C4)"
+        - "batch-scoring — Scoring batch ★★ (C3)"
+        - "onnx-quantifie — Inférence optimisée ONNX quantifié ★★ (C3)"
+        - "scale-to-zero — Scale-to-zero ★★ (C3)"
+        - "shadow — Déploiement shadow ★★★ (C3, C5)"
+        - "ab-test — Test A/B ★★★ (C3, C5)"
+        - "tests-comportementaux — Tests comportementaux en CI ★★ (C4)"
+        - "gate-equite — Gate d'équité Fairlearn en CI ★★ (C4, C6)"
+        - "drift-predictions — Drift sur les prédictions ★★★ (C5)"
+        - "tracing — Tracing de bout en bout OpenTelemetry/Jaeger ★★ (C5)"
+        - "explain-api — Explicabilité en production /explain SHAP ★★ (C6)"
+        - "supply-chain — Chaîne de confiance cosign + admission ★★★ (C6)"
+        - "model-card-auto — Model card automatique ★ (C6)"
+        - "rag-projet — Assistant RAG du projet + Ragas en CI ★★★ (C4, C6)"
+        - "hors-catalogue — Extension proposée (à décrire ci-dessous, validation avant fin S8)"
+    validations:
+      required: true
+  - type: textarea
+    id: objectif
+    attributes:
+      label: Objectif et démonstration visée
+      description: >-
+        En 3 à 6 lignes : ce que l'extension ajoute au socle, et ce que vous montrerez en
+        5 minutes de soutenance (le « moment » de la démo).
+    validations:
+      required: true
+  - type: textarea
+    id: plan
+    attributes:
+      label: Plan de réalisation
+      description: >-
+        Étapes, outils, ce qui s'installe dans le cluster (mémoire !), tests prévus, ADR prévu.
+        Reprenez les « attendus minimaux » et « critères de réussite » du catalogue.
+      value: |
+        - Branche : `ext/<nom>`
+        - Étapes :
+        - Tests automatisés prévus :
+        - ADR prévu (décision à prendre) :
+        - Ressources supplémentaires dans le cluster (RAM estimée) :
+    validations:
+      required: true
+  - type: textarea
+    id: hors-catalogue
+    attributes:
+      label: "Hors catalogue uniquement : niveau proposé, compétences visées, critères de réussite"
+      description: >-
+        Niveau proposé (★, ★★ ou ★★★) avec justification, compétences C1 à C6 travaillées,
+        et 2 à 4 critères de réussite vérifiables. Laisser vide si l'extension est au catalogue.
+    validations:
+      required: false
+  - type: checkboxes
+    id: engagements
+    attributes:
+      label: Engagements
+      options:
+        - label: "Mon partenaire et moi avons choisi deux extensions différentes."
+          required: true
+        - label: "J'ai vérifié que moins de 3 binômes de mon groupe ont déjà déclaré cette extension."
+          required: true
+        - label: "Je livrerai une branche ext/<nom> fusionnée par PR relue, des tests, un ADR et une page de rapport."
+          required: true

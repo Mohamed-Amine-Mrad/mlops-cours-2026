@@ -1,0 +1,12 @@
+# Values prometheus-pushgateway (chart prometheus-community 3.9.0, Pushgateway v1.11) — Lab 7.
+# Le job de drift (CronJob scoring-drift) pousse ses métriques ici ; Prometheus les
+# scrape via le ServiceMonitor créé par le chart.
+#   Service : prometheus-pushgateway.monitoring:9091
+serviceMonitor:
+  enabled: true
+  namespace: monitoring
+  # honorLabels: true (défaut du chart) conserve le label job="scoring-drift" poussé
+  # par le job au lieu de le remplacer par celui de la cible.
+resources:
+  requests: {cpu: 10m, memory: 32Mi}
+  limits: {memory: 64Mi}

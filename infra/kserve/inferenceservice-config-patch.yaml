@@ -1,0 +1,31 @@
+# Patch de la ConfigMap kserve/inferenceservice-config appliqué par install.sh
+# (kubectl patch --type merge --patch-file). Chaque clé remplace la valeur JSON entière
+# du même nom ; les autres clés de la ConfigMap gardent les valeurs de KServe v0.21.0.
+#   - deploy.defaultDeploymentMode = Knative (ex-« Serverless ») : Knative Serving + Kourier,
+#     scale-to-zero, canary par canaryTrafficPercent. Le mode Standard (ex-« RawDeployment » :
+#     Deployment + Service + HPA) reste disponible par l'annotation
+#     serving.kserve.io/deploymentMode de chaque InferenceService ;
+#   - ingress.disableIstioVirtualHost = true : pas d'Istio dans le cours, Knative utilise
+#     Kourier (procédure « alternative networking layer » de la documentation KServe) ;
+#   - ingress.disableIngressCreation = true : pas d'Ingress pour les éventuels services en mode
+#     Standard (aucun contrôleur d'Ingress n'est installé pour eux sur kind).
+data:
+  deploy: |-
+    {
+      "defaultDeploymentMode": "Knative"
+    }
+  ingress: |-
+    {
+      "enableGatewayApi": false,
+      "kserveIngressGateway": "kserve/kserve-ingress-gateway",
+      "ingressGateway": "knative-serving/knative-ingress-gateway",
+      "localGateway": "knative-serving/knative-local-gateway",
+      "localGatewayService": "kourier-internal.kourier-system.svc.cluster.local",
+      "ingressDomain": "example.com",
+      "ingressClassName": "istio",
+      "domainTemplate": "{{ .Name }}-{{ .Namespace }}.{{ .IngressDomain }}",
+      "urlScheme": "http",
+      "disableIstioVirtualHost": true,
+      "disableIngressCreation": true,
+      "disableHTTPRouteTimeout": false
+    }

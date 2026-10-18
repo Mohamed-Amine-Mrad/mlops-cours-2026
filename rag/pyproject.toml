@@ -1,0 +1,42 @@
+[project]
+name = "mlops-rag"
+version = "2026.10.0"
+description = "Lab 9 — LLMOps : RAG sur les documents du cours (projet isolé du socle)"
+requires-python = ">=3.12,<3.13"
+# Projet Python séparé du socle (M0-M8) : ses dépendances (LangChain, Ragas, Phoenix…)
+# ne modifient pas l'environnement du projet de scoring.
+#   uv sync --project rag          (depuis la racine du repo)
+#   uv run --project rag python rag/ingest.py
+dependencies = [
+  "langchain-core==1.6.6",
+  "langchain-community==0.4.1",   # 0.4.2 casse `import ragas` 0.4.3
+  "langchain-text-splitters==1.1.3",
+  "langchain-qdrant==1.1.0",
+  "langchain-ollama==1.1.0",
+  "langchain-openai==1.6.7",
+  "qdrant-client==1.19.1",
+  "fastembed==0.8.1",
+  "pypdf==6.19.0",
+  "ragas==0.4.3",
+  "arize-phoenix==20.19.0",
+  "arize-phoenix-otel==0.17.2",
+  "openinference-instrumentation-langchain==0.1.78",
+  "openai>=2",
+  "fastapi>=0.115,<1",
+  "uvicorn>=0.34,<1",
+  "prometheus-client>=0.24",
+]
+
+[dependency-groups]
+dev = ["ruff==0.16.10", "pytest==9.1.1"]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["."]               # modules de rag/ = first-party pour le tri des imports
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]

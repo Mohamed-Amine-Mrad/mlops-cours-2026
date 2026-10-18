@@ -1,0 +1,14 @@
+[project]
+name = "mlops-build-pdf"
+version = "1.0.0"
+description = "Générateur PDF des énoncés du cours MLOps (Markdown -> PDF à la charte du cours)"
+requires-python = ">=3.10"
+dependencies = [
+    "reportlab==5.0.1",
+    "markdown-it-py==4.2.0",
+    "pyyaml==6.0.3",
+    "pygments==2.21.0",
+]
+
+[tool.uv]
+package = false

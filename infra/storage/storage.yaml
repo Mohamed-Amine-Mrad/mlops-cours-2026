@@ -1,0 +1,140 @@
+# =============================================================================
+# Stockage objet S3 du cours — SeaweedFS (Apache 2.0)
+# Remplace MinIO (édition communautaire archivée, images retirées de Docker Hub
+# en septembre 2026). SeaweedFS est aussi le stockage par défaut de Kubeflow
+# Pipelines depuis KFP 2.15 : une seule technologie S3 pour tout le cours.
+#
+# Configuration de TP : 1 réplica, pas de TLS, identifiants de lab.
+# À NE JAMAIS utiliser tel quel en production.
+#
+#   Endpoint S3 dans le cluster : http://s3.storage:8333
+#   Endpoint S3 depuis le poste : http://localhost:8333   (port-forward)
+#   Interface web (filer)       : http://localhost:8888   (port-forward)
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: storage
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: s3-credentials
+  namespace: storage
+type: Opaque
+stringData:
+  # Variables standard AWS : réutilisables telles quelles via envFrom.
+  AWS_ACCESS_KEY_ID: mlops
+  AWS_SECRET_ACCESS_KEY: mlops-lab-secret
+---
+# Fichier d'identités lu par SeaweedFS (-s3.config). Mêmes identifiants.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: seaweedfs-config
+  namespace: storage
+type: Opaque
+stringData:
+  s3.json: |
+    {
+      "identities": [
+        {
+          "name": "mlops",
+          "credentials": [
+            { "accessKey": "mlops", "secretKey": "mlops-lab-secret" }
+          ],
+          "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+        }
+      ]
+    }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: seaweedfs-data
+  namespace: storage
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seaweedfs
+  namespace: storage
+  labels:
+    app: seaweedfs
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: seaweedfs
+  template:
+    metadata:
+      labels:
+        app: seaweedfs
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: seaweedfs
+          image: ghcr.io/chrislusf/seaweedfs:4.48
+          args:
+            - server
+            - -dir=/data
+            - -filer
+            - -s3
+            - -s3.config=/etc/seaweedfs/s3.json
+            - -master.volumePreallocate=false
+            - -master.volumeSizeLimitMB=1024
+          ports:
+            - { name: s3, containerPort: 8333 }
+            - { name: filer, containerPort: 8888 }
+            - { name: master, containerPort: 9333 }
+          readinessProbe:
+            httpGet: { path: /status, port: 8333 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /status, port: 8333 }
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests: { cpu: 50m, memory: 256Mi }
+            limits: { memory: 1Gi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: data, mountPath: /data }
+            - { name: s3-config, mountPath: /etc/seaweedfs, readOnly: true }
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: seaweedfs-data
+        - name: s3-config
+          secret:
+            secretName: seaweedfs-config
+            items:
+              - { key: s3.json, path: s3.json }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: s3
+  namespace: storage
+spec:
+  selector:
+    app: seaweedfs
+  ports:
+    - { name: s3, port: 8333, targetPort: 8333 }
+    - { name: filer, port: 8888, targetPort: 8888 }

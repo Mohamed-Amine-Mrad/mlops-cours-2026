@@ -1,0 +1,53 @@
+# Values Grafana Alloy (chart grafana/alloy 1.13.0, Alloy v1.20) — Lab 7.
+# Alloy remplace Promtail (déprécié, fin de vie le 2 mars 2026) pour collecter les
+# logs des pods et les envoyer à Loki. loki.source.kubernetes lit les logs via l'API
+# Kubernetes : un seul pod suffit pour tout le cluster (pas de DaemonSet ni hostPath).
+controller:
+  type: deployment
+  replicas: 1
+crds:
+  create: false
+alloy:
+  enableReporting: false         # pas de statistiques d'usage envoyées à Grafana Labs
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}
+    limits: {memory: 512Mi}
+  configMap:
+    content: |
+      // Découverte de tous les pods du cluster
+      discovery.kubernetes "pods" {
+        role = "pod"
+      }
+
+      // Labels Loki lisibles : namespace, pod, container (+ révision Knative si présente)
+      discovery.relabel "pods" {
+        targets = discovery.kubernetes.pods.targets
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_name"]
+          target_label  = "pod"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          target_label  = "container"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_serving_knative_dev_revision"]
+          target_label  = "revision"
+        }
+      }
+
+      // Lecture des logs via l'API Kubernetes
+      loki.source.kubernetes "pods" {
+        targets    = discovery.relabel.pods.output
+        forward_to = [loki.write.default.receiver]
+      }
+
+      loki.write "default" {
+        endpoint {
+          url = "http://loki.monitoring:3100/loki/api/v1/push"
+        }
+      }

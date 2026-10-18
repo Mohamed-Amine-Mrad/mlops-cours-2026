@@ -1,0 +1,8 @@
+# Générés par install.sh (jamais commités)
+docker-compose.yaml
+.env
+kubeconfig
+logs/
+config/
+plugins/
+dags/
